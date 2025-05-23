@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Fraud Checker</title>
+</head>
+<body>
+  <h2>Check Transaction</h2>
+  <form id="form">
+    <input type="number" name="distance_from_home" placeholder="Distance from Home" step="0.1" required><br>
+    <input type="number" name="distance_from_last_transaction" placeholder="Distance from Last Tx" step="0.1" required><br>
+    <input type="number" name="ratio_to_median_purchase_price" placeholder="Ratio to Median" step="0.1" required><br>
+    <input type="number" name="repeat_retailer" placeholder="Repeat Retailer (0/1)" required><br>
+    <input type="number" name="used_chip" placeholder="Used Chip (0/1)" required><br>
+    <input type="number" name="used_pin_number" placeholder="Used PIN (0/1)" required><br>
+    <input type="number" name="online_order" placeholder="Online Order (0/1)" required><br>
+    <button type="submit">Check Fraud</button>
+  </form>
+  <h3 id="result"></h3>
+
+  <script>
+    document.getElementById("form").onsubmit = async function(e) {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = {};
+      formData.forEach((val, key) => {
+        if(key === 'repeat_retailer' || key === 'used_chip' || key === 'used_pin_number' || key === 'online_order') {
+          data[key] = parseInt(val);  // these are integer 0/1
+        } else {
+          data[key] = parseFloat(val); // continuous float values
+        }
+      });
+
+      const res = await fetch("http://127.0.0.1:8000/predict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+
+      if(!res.ok) {
+        document.getElementById("result").innerText = "Error calling API";
+        return;
+      }
+
+      const result = await res.json();
+
+      document.getElementById("result").innerText = result.prediction === 1
+        ? `⚠️ Fraud Detected! Confidence: ${(result.confidence*100).toFixed(2)}%`
+        : `✅ Transaction is Safe. Confidence: ${(100 - result.confidence*100).toFixed(2)}%`;
+    };
+  </script>
+</body>
+</html>
