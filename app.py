@@ -185,6 +185,7 @@ import numpy as np
 import os
 import logging
 
+
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -199,6 +200,11 @@ else:
 
 # App title
 st.title("Fraud Detection App")
+
+# Health Check Section
+with st.expander("🔍 Health Check"):
+    st.write("Model loaded:", model is not None)
+    st.write("Current directory:", os.getcwd())
 
 # Input form
 st.header("Enter Transaction Details")
@@ -231,3 +237,23 @@ if st.button("Predict Fraud"):
             st.info(f"Confidence: {confidence:.2f}")
         except Exception as e:
             st.error(f"Prediction error: {str(e)}")
+
+# Your existing input data code...
+input_data = [[
+    distance_from_home,
+    distance_from_last_transaction,
+    ratio_to_median_purchase_price,
+    repeat_retailer,
+    used_chip,
+    used_pin_number,
+    online_order
+]]
+
+# Prediction
+prediction = model.predict(input_data)[0]
+confidence = model.predict_proba(input_data)[0][1]
+
+# Show result
+st.success(f"🎯 Prediction: {'Fraud (1)' if prediction == 1 else 'Not Fraud (0)'}")
+st.info(f"📊 Confidence: {confidence:.4%}")
+
