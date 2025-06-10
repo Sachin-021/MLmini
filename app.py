@@ -1,184 +1,3 @@
-
-'''from fastapi import FastAPI, Request
-from pydantic import BaseModel
-import joblib
-
-app = FastAPI()
-
-# Load model
-model = joblib.load("rf_fraud_model.pkl")
-# Define input schema
-class Transaction(BaseModel):
-    distance_from_home: float
-    distance_from_last_transaction: float
-    ratio_to_median_purchase_price: float
-    repeat_retailer: int
-    used_chip: int
-    used_pin_number: int
-    online_order: int
-    
-@app.get("/")
-def read_root():
-    return {"message": "Welcome to the API!"}
-
-@app.post("/predict")
-def predict(transaction: Transaction):
-    input_data = [[
-        transaction.distance_from_home,
-        transaction.distance_from_last_transaction,
-        transaction.ratio_to_median_purchase_price,
-        transaction.repeat_retailer,
-        transaction.used_chip,
-        transaction.used_pin_number,
-        transaction.online_order
-    ]]
-    prediction = model.predict(input_data)[0]
-    proba = model.predict_proba(input_data)[0][1]
-
-    return {
-        "fraud": bool(prediction),
-        "confidence": round(proba, 4)
-    }'''
-
-'''from fastapi import FastAPI
-from pydantic import BaseModel
-import joblib
-
-app = FastAPI()
-
-# Load your trained model
-model = joblib.load("rf_fraud_model.pkl")
-
-# Define input schema
-class Transaction(BaseModel):
-    distance_from_home: float
-    distance_from_last_transaction: float
-    ratio_to_median_purchase_price: float
-    repeat_retailer: int
-    used_chip: int
-    used_pin_number: int
-    online_order: int
-
-from fastapi.responses import FileResponse
-
-@app.get("/")
-def serve_html():
-    return FileResponse("static/index.html")
-
-@app.post("/predict")
-def predict(transaction: Transaction):
-    input_data = [[
-        transaction.distance_from_home,
-        transaction.distance_from_last_transaction,
-        transaction.ratio_to_median_purchase_price,
-        transaction.repeat_retailer,
-        transaction.used_chip,
-        transaction.used_pin_number,
-        transaction.online_order
-    ]]
-    prediction = model.predict(input_data)[0]
-    proba = model.predict_proba(input_data)[0][1]
-
-    return {
-        "prediction": int(prediction),   # Return int 0 or 1
-        "confidence": round(proba, 4)
-    }'''
-'''from fastapi import FastAPI, HTTPException, Request
-from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-import joblib
-import numpy as np
-import logging
-import os
-
-# Set up logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-# Initialize FastAPI app
-app = FastAPI()
-
-# Add CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Adjust for production
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Initialize template engine
-templates = Jinja2Templates(directory=".")
-
-# Load the trained model
-model = None
-try:
-    if not os.path.exists("rf_fraud_model.pkl"):
-        logger.error("Model file 'rf_fraud_model.pkl' not found. Please run model.py to generate it.")
-        raise FileNotFoundError("Model file 'rf_fraud_model.pkl' not found.")
-    model = joblib.load("rf_fraud_model.pkl")
-    logger.info("Model loaded successfully.")
-except Exception as e:
-    logger.error(f"Failed to load model: {str(e)}")
-    raise Exception(f"Failed to load model: {str(e)}")
-
-# Define input data model
-class Transaction(BaseModel):
-    distance_from_home: float
-    distance_from_last_transaction: float
-    ratio_to_median_purchase_price: float
-    repeat_retailer: int
-    used_chip: int
-    used_pin_number: int
-    online_order: int
-
-# Health check endpoint
-@app.get("/health")
-async def health_check():
-    return JSONResponse(content={
-        "status": "healthy",
-        "model_loaded": model is not None,
-        "template_directory": os.path.abspath(".")
-    })
-
-# Serve the form
-@app.get("/", response_class=HTMLResponse)
-async def read_form(request: Request):
-    try:
-        if not os.path.exists("index.html"):
-            logger.error("index.html not found in the current directory.")
-            raise HTTPException(status_code=500, detail="Template file 'index.html' not found.")
-        return templates.TemplateResponse("index.html", {"request": request})
-    except Exception as e:
-        logger.error(f"Error rendering template: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error rendering template: {str(e)}")
-
-# Handle prediction
-@app.post("/predict")
-async def predict(transaction: Transaction):
-    try:
-        input_data = [[
-            transaction.distance_from_home,
-            transaction.distance_from_last_transaction,
-            transaction.ratio_to_median_purchase_price,
-            transaction.repeat_retailer,
-            transaction.used_chip,
-            transaction.used_pin_number,
-            transaction.online_order
-        ]]
-        prediction = model.predict(input_data)[0]
-        confidence = model.predict_proba(input_data)[0][1]
-        return JSONResponse(content={
-            "prediction": int(prediction),
-            "confidence": float(confidence)
-        })
-    except Exception as e:
-        logger.error(f"Prediction error: {str(e)}")
-        raise HTTPException(status_code=400, detail=f"Prediction error: {str(e)}")'''
-
-
 import streamlit as st
 import joblib
 import numpy as np
@@ -188,7 +7,7 @@ import logging
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(_name_)
 
 # Load the trained model
 model = None
@@ -199,12 +18,9 @@ else:
     logger.info("Model loaded successfully.")
 
 # App title
-st.title("Fraud Detection App")
+st.title("Credit Card Fraud Detection")
 
 # Health Check Section
-with st.expander("🔍 Health Check"):
-    st.write("Model loaded:", model is not None)
-    st.write("Current directory:", os.getcwd())
 
 # Input form
 st.header("Enter Transaction Details")
@@ -256,4 +72,3 @@ confidence = model.predict_proba(input_data)[0][1]
 # Show result
 st.success(f"🎯 Prediction: {'Fraud (1)' if prediction == 1 else 'Not Fraud (0)'}")
 st.info(f"📊 Confidence: {confidence:.4%}")
-
